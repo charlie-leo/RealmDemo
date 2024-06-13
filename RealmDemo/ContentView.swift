@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var age : String = ""
     @State var items : [Notes] = []
     
+    @ObservedResults(Notes.self) var itemList
+    
     
     var body: some View {
         
@@ -30,17 +32,9 @@ struct ContentView: View {
                 TextField( "Age" , text : $age)
                 
                 Button {
-                    saveData(name: name, gender: gender, age: age, callback: { status in
-                        if status {
-                            
-                            name = ""
-                            gender = ""
-                            age = ""
-                            items = getAllNotes()
-                        } else {
-                            
-                        }
-                    })
+                    
+                    $itemList.append(Notes(name: name, gender: gender, age: age))
+
                 } label: {
                     Text("Save")
                 }
@@ -48,45 +42,59 @@ struct ContentView: View {
             
             HStack {
                 Button {
-                   items = getAllNotes()
+//                   items = getAllNotes()
                 } label: {
                     Text("All")
                 }
                 Spacer()
                 Button {
-                    items = getNotesByGender(gender: "M")
+//                    items = getNotesByGender(gender: "M")
                 } label: {
                     Text("Male")
                 }
                 Spacer()
                 Button {
-                    items = getNotesByGender(gender: "F")
+//                    items = getNotesByGender(gender: "F")
                 } label: {
                     Text("Female")
                 }
             }
             
-            List(self.items) { item in
-                HStack {
-                    Text(item.name)
-                    Spacer()
-                    Text(item.gender)
-                    Spacer()
-                    Text(item.age)
-                    Spacer()
-                    Image(systemName: "trash")
-                        .foregroundColor(.black).onTapGesture {
-                            deleteItem(note: item){ status in
-                                items = getAllNotes()
-                            }
-                        }
-                }
+            List(self.itemList) { item in
+                NoteItem(item: item, onDelete: { note in
+                    
+                    $itemList.remove(note)
+                    
+                })
             }
             
         }
         .padding()
         .onAppear{
-            self.items = getAllNotes()
+//            self.items = getAllNotes()
+        }
+    }
+    
+    
+    
+    struct NoteItem : View {
+        
+        @ObservedRealmObject var item : Notes
+        @State var onDelete : (Notes) -> ()
+        
+        var body: some View {
+            HStack {
+                Text(item.name)
+                Spacer()
+                Text(item.gender)
+                Spacer()
+                Text(item.age)
+                Spacer()
+                Image(systemName: "trash")
+                    .foregroundColor(.black).onTapGesture {
+                        onDelete(item)
+                    }
+            }
         }
     }
     
@@ -137,6 +145,9 @@ struct ContentView: View {
             $0.gender == gender
         })
     }
+    
+    
+    
 }
 
 
